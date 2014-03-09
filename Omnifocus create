@@ -1,10 +1,14 @@
-on run {input, parameters}
+on run
 	
 	set target_account to "Paypal"
 	set target_mailbox to "My Folders/@Action Omnifocus"
 	set _inbox to "Inbox"
 	set due_date to "Friday"
 	
+	--tell application "OmniFocus"
+	--	synchronize
+	--end tell
+	--delay 30
 	tell application "Mail"
 		set _msgs_to_capture to (messages of mailbox _inbox of account target_account whose flagged status is true)
 		repeat with eachMessage in _msgs_to_capture
@@ -23,3 +27,12 @@ on run {input, parameters}
 			set flagged status of eachMessage to false
 			move the eachMessage to mailbox target_mailbox of account target_account
 		end repeat
+	end tell
+	tell application "OmniFocus"
+		synchronize
+	end tell
+	delay 30
+	--tell application "OmniFocus"
+	--	quit
+	--end tell
+end run
