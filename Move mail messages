@@ -1,0 +1,14 @@
+on run
+	set theAccount to "Exchange"
+	set targetFolder to "My Folders/PayPal/PD Leadership"
+	tell application "Mail"
+		set selectedMails to the selection in account theAccount
+		if the length of selectedMails is greater than 0 then
+			repeat with theMessage in selectedMails
+				move theMessage to mailbox targetFolder in account theAccount
+			end repeat
+		else
+			say "You have to select mails first"
+		end if
+	end tell
+end run
