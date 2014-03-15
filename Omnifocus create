@@ -1,53 +1,96 @@
 on run
 	
+	-- FIRST TACKLE EXCHANGE EMAILS
+	
 	set target_account to "Paypal"
 	set target_mailbox to "My Folders/@Action Omnifocus"
 	set _inbox to "Inbox"
-	set due_date to "Friday"
+	set _context to "Work email"
+	set _project to "PayPal Misc"
+	set today_date to the current date
 	
-	--tell application "OmniFocus"
-	--	synchronize
-	--end tell
-	--delay 30
 	tell application "Mail"
 		set _msgs_to_capture to (messages of mailbox _inbox of account target_account whose flagged status is true)
 		repeat with eachMessage in _msgs_to_capture
 			set theStart to missing value
-			set theDue to due_date
-			set theOmniTask to missing value
+			--set theOmniTask to missing value
 			set theTitle to the subject of eachMessage
 			set theNotes to the content of eachMessage
 			set theCombinedBody to "message://%3c" & message id of eachMessage & "%3e" & return & return & theNotes
 			tell application "OmniFocus"
 				tell default document
-					set newTaskProps to {name:theTitle} & {note:theCombinedBody}
-					set newTask to make new inbox task with properties newTaskProps
+					-- GET A REFERENCE TO AN EXISTING (OR NEW) CONTEXT
+					set lstContexts to (flattened contexts where name = _context)
+					if lstContexts ≠ {} then
+						set oContext to item 1 of lstContexts
+						say "Found Context"
+					else
+						set oContext to (make new context with properties {name:_context})
+					end if
+					-- GET A REFERENCE TO AN EXISTING (OR NEW) PROJECT
+					set lstProjects to (flattened projects where name = _project)
+					if lstProjects ≠ {} then
+						set oProject to item 1 of lstProjects
+						say "Found Project"
+					else
+						say "Project not existing"
+					end if
+					set due_date to today_date + (1 * days)
+					set newTaskProps to {name:theTitle} & {note:theCombinedBody} & {due date:due_date} & {context:oContext}
+					tell oProject to make new task with properties (newTaskProps)
 				end tell
 			end tell
 			set flagged status of eachMessage to false
 			move the eachMessage to mailbox target_mailbox of account target_account
 		end repeat
+		
+		-- NOW DO YAHOO MAIL
+		
 		set target_account to "pwoodhouse2000@yahoo.com"
 		set _inbox to "INBOX"
 		set target_mailbox to "_Action Needed"
+		set _context to "Personal email"
+		set _project to "Personal Misc"
+		
 		set _msgs_to_capture to (messages of mailbox _inbox of account target_account whose flagged status is true)
 		repeat with eachMessage in _msgs_to_capture
 			set theStart to missing value
-			set theDue to due_date
-			set theOmniTask to missing value
+			--set theOmniTask to missing value
 			set theTitle to the subject of eachMessage
 			set theNotes to the content of eachMessage
 			set theCombinedBody to "message://%3c" & message id of eachMessage & "%3e" & return & return & theNotes
 			tell application "OmniFocus"
 				tell default document
-					set newTaskProps to {name:theTitle} & {note:theCombinedBody}
-					set newTask to make new inbox task with properties newTaskProps
+					-- GET A REFERENCE TO AN EXISTING (OR NEW) CONTEXT
+					set lstContexts to (flattened contexts where name = _context)
+					if lstContexts ≠ {} then
+						set oContext to item 1 of lstContexts
+						say "Found Context"
+					else
+						set oContext to (make new context with properties {name:_context})
+					end if
+					-- GET A REFERENCE TO AN EXISTING (OR NEW) PROJECT
+					set lstProjects to (flattened projects where name = _project)
+					if lstProjects ≠ {} then
+						set oProject to item 1 of lstProjects
+						say "Found Project"
+					else
+						say "Project not existing"
+					end if
+					set due_date to today_date + (1 * days)
+					set newTaskProps to {name:theTitle} & {note:theCombinedBody} & {due date:due_date} & {context:oContext}
+					tell oProject to make new task with properties (newTaskProps)
 				end tell
 			end tell
 			set flagged status of eachMessage to false
 			move the eachMessage to mailbox target_mailbox of account target_account
 		end repeat
 	end tell
+	-- FUTURE
+	-- get messages in the Omnifocus folders which are flagged
+	-- match the title to any active tasks in Omnifocus
+	-- set the status of the task to completed
+	-- move the message to Done folder
 	tell application "OmniFocus"
 		synchronize
 	end tell
