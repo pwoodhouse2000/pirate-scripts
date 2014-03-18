@@ -2,8 +2,9 @@ on run
 	
 	-- FIRST TACKLE EXCHANGE EMAILS
 	
-	set target_account to "Paypal"
+	set target_account to "Exchange"
 	set target_mailbox to "My Folders/@Action Omnifocus"
+	set done_mailbox to "My Folders/@Omnifocus Done"
 	set _inbox to "Inbox"
 	set _context to "Work email"
 	set _project to "PayPal Misc"
@@ -19,7 +20,9 @@ on run
 			set theCombinedBody to "message://%3c" & message id of eachMessage & "%3e" & return & return & theNotes
 			tell application "OmniFocus"
 				tell default document
+					
 					-- GET A REFERENCE TO AN EXISTING (OR NEW) CONTEXT
+					
 					set lstContexts to (flattened contexts where name = _context)
 					if lstContexts ≠ {} then
 						set oContext to item 1 of lstContexts
@@ -27,7 +30,9 @@ on run
 					else
 						set oContext to (make new context with properties {name:_context})
 					end if
+					
 					-- GET A REFERENCE TO AN EXISTING (OR NEW) PROJECT
+					
 					set lstProjects to (flattened projects where name = _project)
 					if lstProjects ≠ {} then
 						set oProject to item 1 of lstProjects
@@ -40,13 +45,73 @@ on run
 					tell oProject to make new task with properties (newTaskProps)
 				end tell
 			end tell
-			set flagged status of eachMessage to false
+			
+			set flagged status of the eachMessage to false
+			
+			--BEEN GETTING SOME EMAIL MESSAGES THAT SOMEHOW STAY FLAGGED, SO I FIGURED I'D DO THIS TWICE TO BE SURE
+			
+			if the flagged status of the eachMessage is true then
+				set the flagged status of the eachMessage to false
+			end if
+			
+			--MOVE THE MESSAGE FROM THE INBOX TO THE OMNIFOCUS FOLDER
+			
 			move the eachMessage to mailbox target_mailbox of account target_account
+			
 		end repeat
+		
+		
+		-- NOW GO THROUGH EMAIL MESSAGES IN OMNIFOCUS FOLDER WITH FLAGS, SET THE TASKS TO COMPLETE AND MOVE TO DONE FOLDER
+		
+		set _done_msgs_to_capture to (messages of mailbox target_mailbox of account target_account whose flagged status is true)
+		repeat with eachMessage in _done_msgs_to_capture
+			set theTitle to the subject of eachMessage
+			tell application "OmniFocus"
+				tell default document
+					set lstTask to (flattened tasks where name = theTitle)
+					if lstTask ≠ {} then
+						set oTask to item 1 of lstTask
+						say "Found a message with a flag"
+						set completed of oTask to true
+					else
+						say "No Task Found"
+					end if
+					tell application "Mail"
+						move the eachMessage to mailbox done_mailbox of account target_account
+					end tell
+				end tell
+			end tell
+		end repeat
+		
+		-- NOW GO THROUGH OMNIFOCUS COMPLETED TASKS AND MOVE THE CORRESPONDING MAIL MESSAGES TO THE DONE FOLDER
+		
+		tell application "OmniFocus"
+			tell default document
+				set lst_done_Tasks to (flattened tasks where completion date > (today_date - (1 * days)))
+				if lst_done_Tasks ≠ {} then
+					repeat with eachTask in lst_done_Tasks
+						set dTask to name of eachTask
+						--say "Found a completed Task"
+						tell application "Mail"
+							set lst_done_Msg to (messages of mailbox target_mailbox of account target_account whose subject = dTask)
+							if lst_done_Msg ≠ {} then
+								say "Found a matching mail message"
+								move the item 1 of lst_done_Msg to mailbox done_mailbox of account target_account
+							else
+								--say "No matching mail message found"
+							end if
+						end tell
+						set flagged of eachTask to false
+					end repeat
+				else
+					say "There were no flagged and completed tasks found"
+				end if
+			end tell
+		end tell
 		
 		-- NOW DO YAHOO MAIL
 		
-		set target_account to "pwoodhouse2000@yahoo.com"
+		set target_account to "Yahoo!"
 		set _inbox to "INBOX"
 		set target_mailbox to "_Action Needed"
 		set _context to "Personal email"
@@ -86,19 +151,14 @@ on run
 			move the eachMessage to mailbox target_mailbox of account target_account
 		end repeat
 	end tell
-	-- FUTURE
-	-- get messages in the Omnifocus folders which are flagged
-	-- match the title to any active tasks in Omnifocus
-	-- set the status of the task to completed
-	-- move the message to Done folder
+	
 	tell application "OmniFocus"
 		synchronize
 	end tell
 	delay 30
+	
 	tell application "Mail"
 		quit
 	end tell
-	--tell application "OmniFocus"
-	--	quit
-	--end tell
+	
 end run
