@@ -42,4 +42,4 @@ PLAYWRIGHT_PKG=/path/to/node_modules/playwright node test/walkthrough.mjs --shot
 PROJECT=your-gcp-project ./deploy.sh
 ```
 
-Builds the nginx container from `Dockerfile` with Cloud Build and deploys it as the public service `dont-panic` in `europe-west2` (override with `REGION` and `SERVICE`). You need `gcloud` authenticated against the project.
+Builds the nginx container from `Dockerfile` with Cloud Build and deploys it as the public service `dont-panic` in `us-central1` (override with `REGION` and `SERVICE`). You need `gcloud` logged in to the project, or a service-account JSON key in the `GCP_SA_KEY` environment variable with the Cloud Run Admin, Cloud Build Editor, Artifact Registry Admin and Service Account User roles.
