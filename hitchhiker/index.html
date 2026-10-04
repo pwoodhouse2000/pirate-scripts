@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Don't Panic — a Hitchhiker's text adventure</title>
+<meta name="description" content="An unofficial, fan-made text adventure with animated graphics, in the spirit of The Hitchhiker's Guide to the Galaxy. Keep hold of your towel.">
+<meta name="theme-color" content="#04070d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2304070d'/%3E%3Ctext x='32' y='42' font-size='28' font-family='sans-serif' font-weight='800' text-anchor='middle' fill='%235cff8a'%3E42%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div id="app">
+  <header>
+    <div class="brand">DON'T PANIC<small>an unofficial Hitchhiker's text adventure</small></div>
+    <div class="stats"><span>score <b id="score">0 / 42</b></span><span>turns <b id="turns">0</b></span></div>
+    <div class="btns">
+      <button class="btn dp" id="dp" title="Get a hint">DON'T PANIC</button>
+      <button class="btn" id="btn-guide" title="Open the Guide (or type: guide topic)">Guide</button>
+      <button class="btn" id="btn-save">Save</button>
+      <button class="btn" id="btn-restore">Restore</button>
+      <button class="btn" id="btn-sound">Sound: off</button>
+      <button class="btn" id="btn-restart">Restart</button>
+    </div>
+  </header>
+  <main>
+    <div id="left">
+      <section class="panel" id="viewscreen">
+        <div class="frame"><div id="scene"></div></div>
+        <div class="caption"><b id="locname">—</b><span id="region">—</span></div>
+      </section>
+      <section class="panel side"><h3>Exits</h3><div class="chips" id="exits"></div></section>
+      <section class="panel side"><h3>Here</h3><div class="chips" id="here"></div></section>
+      <section class="panel side"><h3>Carrying</h3><div class="chips" id="inv"></div></section>
+      <section class="panel side"><h3>Quick</h3><div class="chips quick">
+        <button class="chip" data-cmd="look">look</button><button class="chip" data-cmd="inventory">inventory</button><button class="chip" data-cmd="wait">wait</button><button class="chip" data-cmd="hint">hint</button><button class="chip" data-cmd="help">help</button><button class="chip" data-cmd="undo">undo</button>
+      </div></section>
+    </div>
+    <section class="panel" id="console">
+      <div id="log" aria-live="polite"></div>
+      <form id="cmdform" autocomplete="off"><span class="prompt">&gt;</span><input id="cmd" type="text" placeholder="What do you do? (try: look, take towel, help)" autofocus autocapitalize="off" spellcheck="false"></form>
+    </section>
+  </main>
+</div>
+
+<div id="pop" class="hidden"></div>
+
+<div id="title" class="overlay hidden">
+  <div class="card">
+    <h1>DON'T PANIC</h1>
+    <p class="muted" style="margin-top:8px">An unofficial text adventure, with graphics, in the spirit of <i>The Hitchhiker's Guide to the Galaxy</i>. New writing, new puzzles, same towel.</p>
+    <div class="scene-wrap"></div>
+    <p>It is Thursday. Your house is about to be demolished, and then, in an escalation that will feel personal, so is your planet. You will need a towel, a pint, a packet of peanuts, a fish, a cup of tea, and the single most depressed robot in the galaxy. Not necessarily in that order. Actually, in roughly that order.</p>
+    <div class="row">
+      <button class="big" id="btn-new">New game</button>
+      <button class="ghost" id="btn-continue">Continue</button>
+      <button class="ghost" id="btn-about">About</button>
+    </div>
+    <div id="about" class="hidden">
+      <p>This is a fan-made homage, written from scratch in 2026 and inspired by the 1984 Infocom text adventure and Douglas Adams' books. It is unofficial, non-commercial, and not affiliated with the Adams estate, Infocom, or anyone with a legal department. All prose and puzzles here are original.</p>
+      <p>Type commands like <b>look</b>, <b>take towel</b>, <b>talk to ford</b>, <b>put towel on drain</b>, <b>ask marvin about missiles</b>. Click underlined words for a menu. The game saves itself after every move; type <b>save</b> for a manual save, <b>undo</b> to take back a move, <b>hint</b> when stuck, and <b>guide</b> <i>topic</i> to consult the Guide. 42 points are available. Of course they are.</p>
+    </div>
+  </div>
+</div>
+
+<div id="guide" class="overlay hidden">
+  <div class="card">
+    <div><div class="glabel">INDEX</div><div id="gindex"></div></div>
+    <div id="gentry">
+      <button id="gclose">Esc</button>
+      <div class="ghead"><div id="gicon"></div><h2 id="gtitle"></h2></div>
+      <div id="gbody"></div>
+    </div>
+  </div>
+</div>
+
+<div id="death" class="overlay hidden">
+  <div class="card death-card">
+    <h2>YOU HAVE DIED</h2>
+    <p>Not the end of the universe. Not quite. The Guide notes that most deaths are the result of insufficient towel.</p>
+    <p class="final"></p>
+    <div class="row"><button class="big death-undo">Undo last move</button><button class="ghost ov-restore">Restore</button><button class="ghost ov-restart">Restart</button></div>
+  </div>
+</div>
+
+<div id="end" class="overlay hidden">
+  <div class="card end-card">
+    <h2>THE END… OF PART ONE</h2>
+    <p>Lunch is at the Restaurant at the End of the Universe. The reservation is in your name, roughly five hundred and seventy-six thousand million years from now. Bring your towel.</p>
+    <p class="final"></p>
+    <div class="row"><button class="big ov-restart">Play again</button><button class="ghost ov-title">Title screen</button></div>
+  </div>
+</div>
+
+<div id="improb" class="overlay hidden"><span>INFINITE IMPROBABILITY DRIVE ENGAGED</span></div>
+
+<script src="js/world.js"></script>
+<script src="js/guide.js"></script>
+<script src="js/scenes.js"></script>
+<script src="js/engine.js"></script>
+</body>
+</html>

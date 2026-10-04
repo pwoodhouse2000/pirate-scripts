@@ -1,0 +1,4 @@
+test/
+deploy.sh
+README.md
+.dockerignore
